@@ -34,11 +34,23 @@ def main():
         index=st.session_state['active_session']
     )
 
-    # Handle selecting a new session or creating a new one
-    if selected_session != "New Chat" and selected_session != session_names[st.session_state['active_session']]:
-        st.session_state['active_session'] = session_names.index(selected_session)
+    # Add a rename input box for the selected session
+    if selected_session != "New Chat":
+        new_session_name = st.text_input(
+            "Rename Chat Session", 
+            value=selected_session,
+            max_chars=50
+        )
+        if new_session_name != selected_session and new_session_name != "":
+            # Rename the session in the db
+            db['chat_sessions'][new_session_name] = db['chat_sessions'].pop(selected_session)
+            with open(DB_FILE, 'w') as file:
+                json.dump(db, file)
+            st.session_state['active_session'] = list(db['chat_sessions'].keys()).index(new_session_name)
+            st.success(f"Session renamed to '{new_session_name}'")
+            st.rerun()
 
-    # If "New Chat" is selected, create a new session
+    # Handle creating a new chat session
     if selected_session == "New Chat":
         new_session_id = str(len(db['chat_sessions']))
         st.session_state['active_session'] = len(db['chat_sessions'])
@@ -65,13 +77,14 @@ def main():
 
         # Display assistant response in chat message container
         with st.chat_message("assistant"):
-            stream = client.chat.completions.create(
+            response = client.chat.completions.create(
                 model=st.session_state["openai_model"],
-                messages=[{"role": m["role"], "content": m["content"]} for m in chat_history],
-                stream=True,
+                messages=[{"role": m["role"], "content": m["content"]} for m in chat_history]
             )
-            response = st.write_stream(stream)
-        chat_history.append({"role": "assistant", "content": response})
+            st.markdown(response['choices'][0]['message']['content'])
+
+        # Add assistant's response to chat history
+        chat_history.append({"role": "assistant", "content": response['choices'][0]['message']['content']})
 
         # Store updated chat history in db.json
         db['chat_sessions'][session_names[st.session_state['active_session']]] = chat_history
