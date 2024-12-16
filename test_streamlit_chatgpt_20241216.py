@@ -5,6 +5,9 @@ import os
 
 DB_FILE = 'db.json'
 
+# Default prompt that cannot be adjusted by the user
+DEFAULT_PROMPT = "You are an investment analyzer."
+
 def main():
     client = OpenAI(api_key=st.session_state.openai_api_key)
 
@@ -34,22 +37,6 @@ def main():
         index=st.session_state['active_session']
     )
 
-    # Add a rename input box for the selected session
-    if selected_session != "New Chat":
-        new_session_name = st.text_input(
-            "Rename Chat Session", 
-            value=selected_session,
-            max_chars=50
-        )
-        if new_session_name != selected_session and new_session_name != "":
-            # Rename the session in the db
-            db['chat_sessions'][new_session_name] = db['chat_sessions'].pop(selected_session)
-            with open(DB_FILE, 'w') as file:
-                json.dump(db, file)
-            st.session_state['active_session'] = list(db['chat_sessions'].keys()).index(new_session_name)
-            st.success(f"Session renamed to '{new_session_name}'")
-            st.rerun()
-
     # Handle creating a new chat session
     if selected_session == "New Chat":
         new_session_id = str(len(db['chat_sessions']))
@@ -61,6 +48,13 @@ def main():
 
     # Get the active session's chat history
     chat_history = db['chat_sessions'][session_names[st.session_state['active_session']]]
+
+    # If it's a new session, add the default prompt (system message)
+    if not any(m["role"] == "system" for m in chat_history):  # Avoid adding multiple system instructions
+        chat_history.insert(0, {"role": "system", "content": DEFAULT_PROMPT})
+        with open(DB_FILE, 'w') as file:
+            json.dump(db, file)
+        st.rerun()
 
     # Display chat messages from the selected session
     for message in chat_history:
