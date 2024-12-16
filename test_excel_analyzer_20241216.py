@@ -48,7 +48,7 @@ def get_openai_insight(prompt):
             ],
             max_tokens=1000,
         )
-        return response['choices'][0]['message']['content']
+        return response.choices[0].message
     except Exception as e:
         return f"Error: {e}"
 
