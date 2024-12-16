@@ -5,7 +5,7 @@ from apikey import apikey
 import streamlit as st
 import pandas as pd
 
-from langchain.llms import OpenAI
+import openai
 from langchain.agents import create_pandas_dataframe_agent
 from dotenv import load_dotenv, find_dotenv
 
