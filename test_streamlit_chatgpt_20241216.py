@@ -58,18 +58,18 @@ def main():
     selected_session = st.sidebar.selectbox("Select Chat Session", session_names + ["New Chat"],
                                             index=st.session_state['active_session'])
 
-    # Create or rename sessions
+    # Handle creating a new chat session
     if selected_session == "New Chat":
         new_session_id = f"Session {len(db['chat_sessions']) + 1}"
-        db['chat_sessions'][new_session_id] = {"messages": [], "summary": ""}
+        if new_session_id not in db['chat_sessions']:
+            db['chat_sessions'][new_session_id] = {"messages": [], "summary": ""}
         st.session_state['active_session'] = len(db['chat_sessions']) - 1
         with open(DB_FILE, 'w') as file:
             json.dump(db, file)
         st.rerun()
-    elif selected_session:
-        active_session = db['chat_sessions'][selected_session]
     else:
-        st.stop()
+        active_session = db['chat_sessions'].get(selected_session, {"messages": [], "summary": ""})
+
 
     # Rename session
     new_session_name = st.text_input("Rename Chat Session", value=selected_session, max_chars=50)
