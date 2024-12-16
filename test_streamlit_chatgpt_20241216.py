@@ -10,7 +10,7 @@ def summarize_conversation(messages, max_messages=5):
     """Summarize the older conversation if the message history is too long."""
     if len(messages) > max_messages:
         # Summarize past conversations if the message count exceeds the max
-        summary_prompt = "Summarize the following investment analysis conversation briefly:\n"
+        summary_prompt = "Summarize the following conversation briefly:\n"
         summary = client.chat.completions.create(
             model=st.session_state["openai_model"],
             messages=[{"role": "user", "content": summary_prompt + "\n".join(m['content'] for m in messages)}]
