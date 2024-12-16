@@ -5,6 +5,12 @@ import os
 
 DB_FILE = 'db.json'
 
+def generate_session_name(messages):
+    # Generate a session name based on the first user message or summary of the discussion
+    # Here, we use the first user message as the basis for naming the session
+    first_user_message = next((m['content'] for m in messages if m['role'] == 'user'), 'General Discussion')
+    return f"Chat about: {first_user_message[:30]}..."  # truncate to the first 30 characters
+
 def main():
     client = OpenAI(api_key=st.session_state.openai_api_key)
 
@@ -38,9 +44,9 @@ def main():
     if selected_session != "New Chat" and selected_session != session_names[st.session_state['active_session']]:
         st.session_state['active_session'] = session_names.index(selected_session)
 
-    # If "New Chat" is selected, create a new session
+    # If "New Chat" is selected, create a new session with a generated name
     if selected_session == "New Chat":
-        new_session_id = str(len(db['chat_sessions']))
+        new_session_id = generate_session_name([])  # Start with an empty message list
         st.session_state['active_session'] = len(db['chat_sessions'])
         db['chat_sessions'][new_session_id] = []  # New chat history for the session
         with open(DB_FILE, 'w') as file:
@@ -73,10 +79,20 @@ def main():
             response = st.write_stream(stream)
         chat_history.append({"role": "assistant", "content": response})
 
+        # Update session name based on the first user message or summary of the chat
+        new_session_name = generate_session_name(chat_history)
+        if new_session_name != selected_session:
+            # Update session name in db if conversation content has changed
+            db['chat_sessions'][new_session_name] = db['chat_sessions'].pop(session_names[st.session_state['active_session']])
+
         # Store updated chat history in db.json
-        db['chat_sessions'][session_names[st.session_state['active_session']]] = chat_history
+        db['chat_sessions'][new_session_name] = chat_history
         with open(DB_FILE, 'w') as file:
             json.dump(db, file)
+
+        # Update active session index
+        session_names = list(db['chat_sessions'].keys())
+        st.session_state['active_session'] = session_names.index(new_session_name)
 
     # Add a "Clear Chat" button to the sidebar for the current session
     if st.sidebar.button('Clear Chat'):
