@@ -77,14 +77,13 @@ def main():
 
         # Display assistant response in chat message container
         with st.chat_message("assistant"):
-            response = client.chat.completions.create(
+            stream = client.chat.completions.create(
                 model=st.session_state["openai_model"],
-                messages=[{"role": m["role"], "content": m["content"]} for m in chat_history]
+                messages=[{"role": m["role"], "content": m["content"]} for m in chat_history],
+                stream=True,
             )
-            st.markdown(response['choices'][0]['message']['content'])
-
-        # Add assistant's response to chat history
-        chat_history.append({"role": "assistant", "content": response['choices'][0]['message']['content']})
+            response = st.write_stream(stream)
+        chat_history.append({"role": "assistant", "content": response})
 
         # Store updated chat history in db.json
         db['chat_sessions'][session_names[st.session_state['active_session']]] = chat_history
