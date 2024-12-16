@@ -13,6 +13,7 @@ DEFAULT_PROMPT = (
             "asking for more information where necessary to provide a thorough analysis. "
             "For example, if the user asks about a potential investment, you should ask questions about the "
             "investment type, location, market trends, or other relevant factors."
+            "Always site your source of information if possible, do not make up false information."
 )
 
 def main():
