@@ -93,7 +93,7 @@ def main():
         st.session_state.messages = []
         st.session_state["openai_model"] = models[0]  # Reset to default model
         st.session_state["openai_api_key"] = None  # Reset the API key if needed
-        st.experimental_rerun()
+        st.rerun()
 
     # Add a "Clear Chat" button to the sidebar
     if st.sidebar.button('Clear Chat'):
