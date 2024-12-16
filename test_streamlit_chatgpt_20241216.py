@@ -10,7 +10,7 @@ def summarize_conversation(messages, max_messages=5):
     """Summarize the older conversation if the message history is too long."""
     if len(messages) > max_messages:
         # Summarize past conversations if the message count exceeds the max
-        summary_prompt = "Summarize the following conversation briefly:\n"
+        summary_prompt = "Summarize the following investment analysis conversation briefly:\n"
         summary = client.chat.completions.create(
             model=st.session_state["openai_model"],
             messages=[{"role": "user", "content": summary_prompt + "\n".join(m['content'] for m in messages)}]
@@ -48,13 +48,23 @@ def main():
         # Summarize the older messages if there are too many
         summarized_messages = summarize_conversation(st.session_state.messages)
 
-        # Prepare messages for the GPT API
+        # Prepare messages for the GPT API with follow-up instructions
+        system_instruction = (
+            "You are an investment analyzer, and you should always ask relevant follow-up questions "
+            "to encourage deeper analysis based on the user's responses. "
+            "Your goal is to guide the user through the investment evaluation process, providing insights and "
+            "asking for more information where necessary to provide a thorough analysis. "
+            "For example, if the user asks about a potential investment, you should ask questions about the "
+            "investment type, location, market trends, or other relevant factors."
+        )
+        
+        # Prepare messages to send to GPT, including system instruction for follow-up questions
         if isinstance(summarized_messages, list):
             # If messages are not summarized yet, send the recent ones
-            conversation_to_send = summarized_messages + [{"role": "user", "content": prompt}]
+            conversation_to_send = [{"role": "system", "content": system_instruction}] + summarized_messages + [{"role": "user", "content": prompt}]
         else:
             # If messages are summarized, send the summarized version and the latest prompt
-            conversation_to_send = [{"role": "user", "content": summarized_messages}] + [{"role": "user", "content": prompt}]
+            conversation_to_send = [{"role": "system", "content": system_instruction}] + [{"role": "user", "content": summarized_messages}] + [{"role": "user", "content": prompt}]
 
         # Get the assistant's response (Investment Analyzer)
         response = client.chat.completions.create(
