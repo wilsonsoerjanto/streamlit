@@ -80,9 +80,16 @@ def main():
         st.success("Session renamed successfully.")
         st.rerun()
 
-    # Retrieve messages and summary
-    chat_history = active_session.get("messages", [])
-    summary = active_session.get("summary", "")
+    # Safely fetch the active session, validate its structure
+    active_session = db['chat_sessions'].get(selected_session, None)
+    
+    # If the session is invalid or a list, reset it to the proper structure
+    if not isinstance(active_session, dict):
+        db['chat_sessions'][selected_session] = {"messages": [], "summary": ""}
+        active_session = db['chat_sessions'][selected_session]
+    
+    chat_history = active_session["messages"]
+
 
     # Display chat (excluding the system prompt)
     for message in chat_history:
