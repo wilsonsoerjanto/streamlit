@@ -98,6 +98,7 @@ if uploaded_file:
             st.write("### OpenAI Response")
             with st.spinner("Generating insights..."):
                 insight = get_openai_insight(prompt)
+                st.markdown(insight)
 
     except Exception as e:
         st.error(f"Error processing the file: {e}")
