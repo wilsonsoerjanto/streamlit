@@ -15,6 +15,7 @@ DEFAULT_PROMPT = (
             "investment type, location, market trends, or other relevant factors."
 )
 
+def main():
     client = OpenAI(api_key=st.session_state.openai_api_key)
 
     # List of models
