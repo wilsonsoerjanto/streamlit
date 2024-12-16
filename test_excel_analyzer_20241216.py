@@ -40,13 +40,13 @@ def summarize_data(df):
 def get_openai_insight(prompt):
     """Send a prompt to OpenAI and return the response."""
     try:
-        response = openai.ChatCompletion.create(
-            model="gpt-4",
+        response = openai.chat.completions.create(
+            model="gpt-4o-mini",
             messages=[
                 {"role": "system", "content": "You are a data analysis assistant."},
                 {"role": "user", "content": prompt},
             ],
-            max_tokens=500,
+            max_tokens=1000,
         )
         return response['choices'][0]['message']['content']
     except Exception as e:
