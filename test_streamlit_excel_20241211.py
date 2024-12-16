@@ -1,6 +1,7 @@
 import streamlit as st
 import pandas as pd
 import openai
+import openpyxl
 import ssl
 # ssl._create_default_https_context = ssl._create_unverified_context
 # App Title
