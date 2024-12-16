@@ -37,6 +37,22 @@ def main():
         index=st.session_state['active_session']
     )
 
+    # Handle session renaming
+    if selected_session != "New Chat":
+        new_session_name = st.text_input(
+            "Rename Chat Session", 
+            value=selected_session,
+            max_chars=50
+        )
+        if new_session_name and new_session_name != selected_session:
+            # Rename the session in the db
+            db['chat_sessions'][new_session_name] = db['chat_sessions'].pop(selected_session)
+            with open(DB_FILE, 'w') as file:
+                json.dump(db, file)
+            st.session_state['active_session'] = list(db['chat_sessions'].keys()).index(new_session_name)
+            st.success(f"Session renamed to '{new_session_name}'")
+            st.rerun()
+
     # Handle creating a new chat session
     if selected_session == "New Chat":
         new_session_id = str(len(db['chat_sessions']))
