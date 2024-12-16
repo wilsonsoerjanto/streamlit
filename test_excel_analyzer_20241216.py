@@ -53,11 +53,7 @@ def get_openai_insight(prompt):
         return f"Error: {e}"
 
 def display_neat_output(content):
-    if content.startswith("Error:"):
-        st.error(content)
-    else:
-        # Format content using markdown for better readability
-        st.markdown(content.replace("\n\n", "\n\n---\n\n"))
+    st.markdown(content.replace("\n\n", "\n\n---\n\n"))
 
 # Streamlit UI
 st.title("Excel Data Analyzer with OpenAI")
