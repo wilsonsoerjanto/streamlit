@@ -34,22 +34,6 @@ def main():
         index=st.session_state['active_session']
     )
 
-    # Add a rename input box for the selected session
-    if selected_session != "New Chat":
-        new_session_name = st.text_input(
-            "Rename Chat Session", 
-            value=selected_session,
-            max_chars=50
-        )
-        if new_session_name != selected_session and new_session_name != "":
-            # Rename the session in the db
-            db['chat_sessions'][new_session_name] = db['chat_sessions'].pop(selected_session)
-            with open(DB_FILE, 'w') as file:
-                json.dump(db, file)
-            st.session_state['active_session'] = list(db['chat_sessions'].keys()).index(new_session_name)
-            st.success(f"Session renamed to '{new_session_name}'")
-            st.rerun()
-
     # Handle creating a new chat session
     if selected_session == "New Chat":
         new_session_id = str(len(db['chat_sessions']))
@@ -61,6 +45,16 @@ def main():
 
     # Get the active session's chat history
     chat_history = db['chat_sessions'][session_names[st.session_state['active_session']]]
+
+    # Add a text input for the user to give instructions (e.g., "You are an investment analyzer")
+    instructions = st.text_input("Provide instructions for the assistant:", value="You are an investment analyzer, and you should always ask relevant follow-up questions to encourage deeper analysis based on the user's responses. Your goal is to guide the user through the investment evaluation process, providing insights and asking for more information where necessary to provide a thorough analysis. For example, if the user asks about a potential investment, you should ask questions about the investment type, location, market trends, or other relevant factors.")
+
+    # If instructions are provided, add them to the chat history
+    if instructions and not any(m["role"] == "system" for m in chat_history):  # Avoid adding multiple system instructions
+        chat_history.insert(0, {"role": "system", "content": instructions})
+        with open(DB_FILE, 'w') as file:
+            json.dump(db, file)
+        st.experimental_rerun()
 
     # Display chat messages from the selected session
     for message in chat_history:
