@@ -3,13 +3,20 @@ from openai import OpenAI
 import json
 import os
 
+
 DB_FILE = 'db.json'
 
-def generate_session_name(messages):
-    # Generate a session name based on the first user message or summary of the discussion
-    # Here, we use the first user message as the basis for naming the session
-    first_user_message = next((m['content'] for m in messages if m['role'] == 'user'), 'General Discussion')
-    return f"Chat about: {first_user_message[:30]}..."  # truncate to the first 30 characters
+def summarize_conversation(messages, max_messages=5):
+    """Summarize the older conversation if the message history is too long."""
+    if len(messages) > max_messages:
+        # Summarize past conversations if the message count exceeds the max
+        summary_prompt = "Summarize the following conversation briefly:\n"
+        summary = client.chat.completions.create(
+            model=st.session_state["openai_model"],
+            messages=[{"role": "user", "content": summary_prompt + "\n".join(m['content'] for m in messages)}]
+        )
+        return summary['choices'][0]['message']['content']
+    return messages
 
 def main():
     client = OpenAI(api_key=st.session_state.openai_api_key)
@@ -23,97 +30,87 @@ def main():
     # Load chat history from db.json
     with open(DB_FILE, 'r') as file:
         db = json.load(file)
+    st.session_state.messages = db.get('chat_history', [])
 
-    # Initialize chat_sessions if not present
-    if 'chat_sessions' not in db:
-        db['chat_sessions'] = {}
-
-    # If 'active_session' not in session_state, set it to 0 (first session)
-    if 'active_session' not in st.session_state:
-        st.session_state['active_session'] = 0
-
-    # Display existing chat sessions
-    session_names = list(db['chat_sessions'].keys())
-    selected_session = st.sidebar.selectbox(
-        "Select Chat Session", 
-        options=session_names + ["New Chat"], 
-        index=st.session_state['active_session']
-    )
-
-    # Handle selecting a new session or creating a new one
-    if selected_session != "New Chat" and selected_session != session_names[st.session_state['active_session']]:
-        st.session_state['active_session'] = session_names.index(selected_session)
-
-    # If "New Chat" is selected, create a new session with a generated name
-    if selected_session == "New Chat":
-        new_session_id = generate_session_name([])  # Start with an empty message list
-        st.session_state['active_session'] = len(db['chat_sessions'])
-        db['chat_sessions'][new_session_id] = []  # New chat history for the session
-        with open(DB_FILE, 'w') as file:
-            json.dump(db, file)
-        st.rerun()
-
-    # Get the active session's chat history
-    chat_history = db['chat_sessions'][session_names[st.session_state['active_session']]]
-
-    # Display chat messages from the selected session
-    for message in chat_history:
+    # Display chat messages from history on app rerun
+    for message in st.session_state.messages:
         with st.chat_message(message["role"]):
             st.markdown(message["content"])
 
     # Accept user input
-    if prompt := st.chat_input("What is up?"):
+    if prompt := st.chat_input("Please provide investment details or ask a question:"):
         # Add user message to chat history
-        chat_history.append({"role": "user", "content": prompt})
+        st.session_state.messages.append({"role": "user", "content": prompt})
         # Display user message in chat message container
         with st.chat_message("user"):
             st.markdown(prompt)
 
+        # Summarize the older messages if there are too many
+        summarized_messages = summarize_conversation(st.session_state.messages)
+
+        # Prepare messages for the GPT API
+        if isinstance(summarized_messages, list):
+            # If messages are not summarized yet, send the recent ones
+            conversation_to_send = summarized_messages + [{"role": "user", "content": prompt}]
+        else:
+            # If messages are summarized, send the summarized version and the latest prompt
+            conversation_to_send = [{"role": "user", "content": summarized_messages}] + [{"role": "user", "content": prompt}]
+
+        # Get the assistant's response (Investment Analyzer)
+        response = client.chat.completions.create(
+            model=st.session_state["openai_model"],
+            messages=conversation_to_send
+        )
+
         # Display assistant response in chat message container
         with st.chat_message("assistant"):
-            stream = client.chat.completions.create(
-                model=st.session_state["openai_model"],
-                messages=[{"role": m["role"], "content": m["content"]} for m in chat_history],
-                stream=True,
-            )
-            response = st.write_stream(stream)
-        chat_history.append({"role": "assistant", "content": response})
+            st.markdown(response['choices'][0]['message']['content'])
 
-        # Update session name based on the first user message or summary of the chat
-        new_session_name = generate_session_name(chat_history)
-        if new_session_name != selected_session:
-            # Update session name in db if conversation content has changed
-            db['chat_sessions'][new_session_name] = db['chat_sessions'].pop(session_names[st.session_state['active_session']])
+        # Add assistant response to chat history
+        st.session_state.messages.append({"role": "assistant", "content": response['choices'][0]['message']['content']})
 
-        # Store updated chat history in db.json
-        db['chat_sessions'][new_session_name] = chat_history
+        # Store chat history to db.json
+        db['chat_history'] = st.session_state.messages
         with open(DB_FILE, 'w') as file:
             json.dump(db, file)
 
-        # Update active session index
-        session_names = list(db['chat_sessions'].keys())
-        st.session_state['active_session'] = session_names.index(new_session_name)
+    # Add a "New Chat" button to the sidebar
+    if st.sidebar.button('New Chat'):
+        # Clear chat history and create a new session
+        db['chat_history'] = []
+        with open(DB_FILE, 'w') as file:
+            json.dump(db, file)
+        st.session_state.messages = []
+        st.session_state["openai_model"] = models[0]  # Reset to default model
+        st.session_state["openai_api_key"] = None  # Reset the API key if needed
+        st.experimental_rerun()
 
-    # Add a "Clear Chat" button to the sidebar for the current session
+    # Add a "Clear Chat" button to the sidebar
     if st.sidebar.button('Clear Chat'):
-        db['chat_sessions'][session_names[st.session_state['active_session']]] = []
+        # Clear chat history in db.json
+        db['chat_history'] = []
         with open(DB_FILE, 'w') as file:
             json.dump(db, file)
+        # Clear chat messages in session state
+        st.session_state.messages = []
         st.rerun()
 
+
 if __name__ == '__main__':
+
     if 'openai_api_key' in st.session_state and st.session_state.openai_api_key:
         main()
+    
     else:
+
         # if the DB_FILE not exists, create it
         if not os.path.exists(DB_FILE):
             with open(DB_FILE, 'w') as file:
                 db = {
                     'openai_api_keys': [],
-                    'chat_sessions': {}
+                    'chat_history': []
                 }
                 json.dump(db, file)
-
         # load the database
         else:
             with open(DB_FILE, 'r') as file:
@@ -121,8 +118,8 @@ if __name__ == '__main__':
 
         # display the selectbox from db['openai_api_keys']
         selected_key = st.selectbox(
-            label="Existing OpenAI API Keys", 
-            options=db['openai_api_keys']
+            label = "Existing OpenAI API Keys", 
+            options = db['openai_api_keys']
         )
 
         # a text input box for entering a new key
