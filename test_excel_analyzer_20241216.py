@@ -81,7 +81,7 @@ if uploaded_file:
             prompt = (
                 f"Please analyze the following dataset and provide {prompt_type.lower()} insights:\n"
                 f"Columns: {', '.join(df.columns)}\n"
-                f"Data Preview: {df.head(5).to_string(index=False)}\n"
+                f"Data Preview: {df.to_string(index=False)}\n"
             )
         else:
             custom_prompt = st.text_area(
@@ -90,7 +90,7 @@ if uploaded_file:
             if custom_prompt:
                 prompt = (
                     f"Dataset Columns: {', '.join(df.columns)}\n"
-                    f"Data Preview: {df.head(5).to_string(index=False)}\n"
+                    f"Data Preview: {df.to_string(index=False)}\n"
                     f"Custom Request: {custom_prompt}"
                 )
 
