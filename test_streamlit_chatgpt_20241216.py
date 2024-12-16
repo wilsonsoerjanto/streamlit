@@ -3,7 +3,6 @@ from openai import OpenAI
 import json
 import os
 
-
 DB_FILE = 'db.json'
 
 def summarize_conversation(messages, max_messages=5):
@@ -86,13 +85,11 @@ def main():
 
     # Add a "New Chat" button to the sidebar
     if st.sidebar.button('New Chat'):
-        # Clear chat history and create a new session
+        # Clear chat history but keep the API key and model
         db['chat_history'] = []
         with open(DB_FILE, 'w') as file:
             json.dump(db, file)
         st.session_state.messages = []
-        st.session_state["openai_model"] = models[0]  # Reset to default model
-        st.session_state["openai_api_key"] = None  # Reset the API key if needed
         st.rerun()
 
     # Add a "Clear Chat" button to the sidebar
@@ -113,7 +110,7 @@ if __name__ == '__main__':
     
     else:
 
-        # if the DB_FILE not exists, create it
+        # if the DB_FILE does not exist, create it
         if not os.path.exists(DB_FILE):
             with open(DB_FILE, 'w') as file:
                 db = {
