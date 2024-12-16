@@ -10,7 +10,7 @@ from langchain.agents import create_pandas_dataframe_agent
 from dotenv import load_dotenv, find_dotenv
 
 #OpenAIKey
-os.environ['OPENAI_API_KEY'] = apikey
+os.environ['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'] = apikey
 load_dotenv(find_dotenv())
 
 #Title
