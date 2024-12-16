@@ -52,9 +52,6 @@ def get_openai_insight(prompt):
     except Exception as e:
         return f"Error: {e}"
 
-def display_neat_output(content):
-    st.markdown(content.replace("\n\n", "\n\n---\n\n"))
-
 # Streamlit UI
 st.title("Excel Data Analyzer with OpenAI")
 
@@ -101,7 +98,6 @@ if uploaded_file:
             st.write("### OpenAI Response")
             with st.spinner("Generating insights..."):
                 insight = get_openai_insight(prompt)
-                display_neat_output(insight)
 
     except Exception as e:
         st.error(f"Error processing the file: {e}")
