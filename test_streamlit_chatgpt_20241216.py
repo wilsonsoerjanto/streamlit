@@ -3,7 +3,6 @@ from openai import OpenAI
 import json
 import os
 
-
 DB_FILE = 'db.json'
 
 def main():
@@ -18,17 +17,31 @@ def main():
     # Load chat history from db.json
     with open(DB_FILE, 'r') as file:
         db = json.load(file)
-    st.session_state.messages = db.get('chat_history', [])
 
-    # Display chat messages from history on app rerun
-    for message in st.session_state.messages:
+    # Create a new chat session or select an existing one
+    if 'active_session' not in st.session_state:
+        st.session_state['active_session'] = 0  # Default to first session if not set
+
+    # Session handling
+    session_names = db.get('chat_sessions', {}).keys()
+    selected_session = st.sidebar.selectbox("Select Chat Session", options=[str(i) for i in range(len(session_names))], index=st.session_state['active_session'])
+
+    # If a new session is selected, update active session
+    if selected_session != str(st.session_state['active_session']):
+        st.session_state['active_session'] = int(selected_session)
+
+    # Get the active session's chat history
+    chat_history = db.get('chat_sessions', {}).get(str(st.session_state['active_session']), [])
+
+    # Display chat messages from the selected session
+    for message in chat_history:
         with st.chat_message(message["role"]):
             st.markdown(message["content"])
 
     # Accept user input
     if prompt := st.chat_input("What is up?"):
         # Add user message to chat history
-        st.session_state.messages.append({"role": "user", "content": prompt})
+        chat_history.append({"role": "user", "content": prompt})
         # Display user message in chat message container
         with st.chat_message("user"):
             st.markdown(prompt)
@@ -37,46 +50,51 @@ def main():
         with st.chat_message("assistant"):
             stream = client.chat.completions.create(
                 model=st.session_state["openai_model"],
-                messages=[
-                    {"role": m["role"], "content": m["content"]}
-                    for m in st.session_state.messages
-                ],
+                messages=[{"role": m["role"], "content": m["content"]} for m in chat_history],
                 stream=True,
             )
             response = st.write_stream(stream)
-        st.session_state.messages.append({"role": "assistant", "content": response})
+        chat_history.append({"role": "assistant", "content": response})
 
-        # Store chat history to db.json
-        db['chat_history'] = st.session_state.messages
+        # Store updated chat history in db.json
+        db['chat_sessions'][str(st.session_state['active_session'])] = chat_history
         with open(DB_FILE, 'w') as file:
             json.dump(db, file)
 
-    # Add a "Clear Chat" button to the sidebar
+    # Add a "New Chat Session" button to the sidebar
+    if st.sidebar.button('New Chat Session'):
+        new_session_id = len(db.get('chat_sessions', {}))
+        st.session_state['active_session'] = new_session_id
+
+        # Create a new session with empty history
+        db.setdefault('chat_sessions', {})[str(new_session_id)] = []
+
+        with open(DB_FILE, 'w') as file:
+            json.dump(db, file)
+        st.rerun()
+
+    # Add a "Clear Chat" button to the sidebar (for the current session)
     if st.sidebar.button('Clear Chat'):
-        # Clear chat history in db.json
-        db['chat_history'] = []
+        db['chat_sessions'][str(st.session_state['active_session'])] = []
         with open(DB_FILE, 'w') as file:
             json.dump(db, file)
-        # Clear chat messages in session state
-        st.session_state.messages = []
+        st.session_state['active_session'] = 0  # Reset to first session
         st.rerun()
 
 
 if __name__ == '__main__':
-
     if 'openai_api_key' in st.session_state and st.session_state.openai_api_key:
         main()
-    
     else:
-
         # if the DB_FILE not exists, create it
         if not os.path.exists(DB_FILE):
             with open(DB_FILE, 'w') as file:
                 db = {
                     'openai_api_keys': [],
-                    'chat_history': []
+                    'chat_sessions': {}
                 }
                 json.dump(db, file)
+
         # load the database
         else:
             with open(DB_FILE, 'r') as file:
@@ -84,8 +102,8 @@ if __name__ == '__main__':
 
         # display the selectbox from db['openai_api_keys']
         selected_key = st.selectbox(
-            label = "Existing OpenAI API Keys", 
-            options = db['openai_api_keys']
+            label="Existing OpenAI API Keys", 
+            options=db['openai_api_keys']
         )
 
         # a text input box for entering a new key
