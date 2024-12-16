@@ -104,34 +104,8 @@ def main():
             json.dump(db, file)
 
 if __name__ == '__main__':
-    if 'openai_api_key' in st.session_state and st.session_state.openai_api_key:
+    st.session_state['openai_api_key'] = st.text_input("Enter your OpenAI API Key", type="password")
+    if st.session_state['openai_api_key']:
         main()
     else:
-        if not os.path.exists(DB_FILE):
-            with open(DB_FILE, 'w') as file:
-                db = {
-                    'openai_api_keys': [],
-                    'chat_history': []
-                }
-                json.dump(db, file)
-        else:
-            with open(DB_FILE, 'r') as file:
-                db = json.load(file)
-
-        selected_key = st.selectbox("Existing OpenAI API Keys", options=db['openai_api_keys'])
-        new_key = st.text_input("New OpenAI API Key", type="password")
-
-        if st.button("Login"):
-            if new_key:
-                db['openai_api_keys'].append(new_key)
-                with open(DB_FILE, 'w') as file:
-                    json.dump(db, file)
-                st.success("Key saved successfully.")
-                st.session_state['openai_api_key'] = new_key
-                st.rerun()
-            elif selected_key:
-                st.success(f"Logged in with key '{selected_key}'")
-                st.session_state['openai_api_key'] = selected_key
-                st.rerun()
-            else:
-                st.error("API Key is required to login.")
+        st.error("API Key is required to start the session.")
