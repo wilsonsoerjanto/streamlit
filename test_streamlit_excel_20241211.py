@@ -69,8 +69,8 @@ if uploaded_file:
                     # OpenAI query
                     with st.spinner("Analyzing your question..."):
                         try:
-                            response = openai.ChatCompletion.create(
-                                model="gpt-3.5-turbo",  # Or use "gpt-4" if available
+                            response = openai.chat.completions.create(
+                                model="gpt-4o",  # Or use "gpt-4" if available
                                 messages=[
                                     {"role": "system", "content": "You are a data analysis assistant."},
                                     {"role": "user", "content": f"Here is a table in JSON format:\n{table_json}\n\nQuestion: {user_question}"}
