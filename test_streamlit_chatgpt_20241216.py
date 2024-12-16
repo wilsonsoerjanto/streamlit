@@ -38,7 +38,7 @@ def main():
             st.markdown(message["content"])
 
     # Accept user input
-    if prompt := st.chat_input("Please provide investment details or ask a question:"):
+    if prompt := st.chat_input("Please ask a question:"):
         # Add user message to chat history
         st.session_state.messages.append({"role": "user", "content": prompt})
         # Display user message in chat message container
