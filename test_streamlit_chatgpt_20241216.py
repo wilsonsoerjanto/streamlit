@@ -68,14 +68,30 @@ def main():
             json.dump(db, file)
         st.rerun()
 
+    # Rename session
+    if selected_session != "New Chat":
+        new_session_name = st.text_input("Rename Chat Session", value=selected_session, max_chars=50)
+        if new_session_name and new_session_name != selected_session:
+            # Ensure the new name doesn't already exist
+            if new_session_name not in db['chat_sessions']:
+                db['chat_sessions'][new_session_name] = db['chat_sessions'].pop(selected_session)
+                selected_session = new_session_name
+                st.session_state['active_session'] = session_names.index(selected_session)
+                with open(DB_FILE, 'w') as file:
+                    json.dump(db, file)
+                st.success("Session renamed successfully.")
+                st.rerun()
+            else:
+                st.error("A session with this name already exists. Please choose a different name.")
+
     # Safely fetch the active session, validate its structure
     active_session = db['chat_sessions'].get(selected_session, {"messages": [], "summary": ""})
     if not isinstance(active_session, dict):
-        active_session = {"messages": [], "summary": ""}
-        db['chat_sessions'][selected_session] = active_session
+        db['chat_sessions'][selected_session] = {"messages": [], "summary": ""}
+        active_session = db['chat_sessions'][selected_session]
 
     chat_history = active_session["messages"]
-    summary = active_session.get("summary", "")
+    summary = active_session["summary"]
 
     # Display chat (excluding the system prompt)
     for message in chat_history:
@@ -96,11 +112,15 @@ def main():
 
         # Generate assistant response
         with st.chat_message("assistant"):
-            response = client.chat.completions.create(
+            stream = client.chat.completions.create(
                 model=st.session_state["openai_model"],
-                messages=api_messages
-            ).choices[0].message.content.strip()
-            st.markdown(response)
+                messages=api_messages,
+                stream=True,
+            )
+            response = ""
+            for chunk in stream:
+                st.markdown(chunk["choices"][0]["delta"]["content"], unsafe_allow_html=True)
+                response += chunk["choices"][0]["delta"]["content"]
 
         # Add assistant message
         chat_history.append({"role": "assistant", "content": response})
@@ -123,7 +143,6 @@ def main():
     if st.sidebar.button("Clear Chat"):
         active_session["messages"] = []
         active_session["summary"] = ""
-        db['chat_sessions'][selected_session] = active_session
         with open(DB_FILE, 'w') as file:
             json.dump(db, file)
         st.rerun()
