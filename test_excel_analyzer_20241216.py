@@ -2,8 +2,30 @@ import streamlit as st
 import pandas as pd
 import openai
 
-# OpenAI API key setup
-openai.api_key = st.secrets["openai_api_key"]
+# Input OpenAI API Key
+st.sidebar.subheader("OpenAI API Key")
+api_key = st.sidebar.text_input("Enter your OpenAI API key", type="password")
+@st.cache_data
+def validate_api_key(key):
+    """
+    Validate the OpenAI API key by making a simple test request.
+    """
+    try:
+        openai.api_key = key
+        # Test request: fetch OpenAI models list
+        openai.models.list()
+        return True, "API key is valid."
+    except openai.AuthenticationError:
+        return False, "Invalid API key. Please check and try again."
+    except Exception as e:
+        return False, f"Error validating API key: {e}"
+if api_key:
+    with st.spinner("Validating API key..."):
+        is_valid, message = validate_api_key(api_key)
+    if is_valid:
+        st.sidebar.success(message)
+    else:
+        st.sidebar.error(message)
 
 def summarize_data(df):
     """Generate a summary of the uploaded data."""
