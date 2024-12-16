@@ -45,7 +45,7 @@ def main():
         db['chat_sessions'][new_session_id] = []  # New chat history for the session
         with open(DB_FILE, 'w') as file:
             json.dump(db, file)
-        st.experimental_rerun()
+        st.rerun()
 
     # Get the active session's chat history
     chat_history = db['chat_sessions'][session_names[st.session_state['active_session']]]
@@ -83,7 +83,7 @@ def main():
         db['chat_sessions'][session_names[st.session_state['active_session']]] = []
         with open(DB_FILE, 'w') as file:
             json.dump(db, file)
-        st.experimental_rerun()
+        st.rerun()
 
 if __name__ == '__main__':
     if 'openai_api_key' in st.session_state and st.session_state.openai_api_key:
@@ -126,11 +126,11 @@ if __name__ == '__main__':
                     json.dump(db, file)
                 st.success("Key saved successfully.")
                 st.session_state['openai_api_key'] = new_key
-                st.experimental_rerun()
+                st.rerun()
             else:
                 if selected_key:
                     st.success(f"Logged in with key '{selected_key}'")
                     st.session_state['openai_api_key'] = selected_key
-                    st.experimental_rerun()
+                    st.rerun()
                 else:
                     st.error("API Key is required to login")
