@@ -46,7 +46,7 @@ def web_search(query, google_api_key, cse_id, excluded_domains=None):
 
 # Function to generate response using OpenAI API
 def generate_response_with_sources(user_query, google_api_key, cse_id):
-    excluded_domains = ["www.reddit.com"]
+    excluded_domains = ["reddit.com"]
     search_results = web_search(user_query, google_api_key, cse_id)
     sources = [result['link'] for result in search_results]
     search_snippets = [result['snippet'] for result in search_results]
