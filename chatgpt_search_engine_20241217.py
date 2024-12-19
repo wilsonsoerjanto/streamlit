@@ -52,7 +52,12 @@ def generate_response_with_sources(user_query, google_api_key, cse_id):
     search_snippets = [result['snippet'] for result in search_results]
     context = '\n'.join(search_snippets)
     messages = [
-        {"role": "system", "content": "You are a helpful assistant. Do not refer to sources from undesired domains"},
+        {"role": "system", "content": "You are an investment analyzer, and after giving out answer, you should always offer the user options for next action items (for example, 'Would you like me to ...?') to encourage deeper analysis based on the user's responses.",
+                                         "Your goal is to guide the user through the investment evaluation process, providing insights and asking for more information where necessary to provide a thorough analysis.",
+                                         "For example, if the user asks about a potential investment, you should ask questions about the investment type, location, market trends, or other relevant factors.",
+                                         "Always consider the most recent information when conducting your analysis, as we would like your information and reasonings to be as relevant as possible.",
+                                         "DO NOT MAKE UP INFORMATION"
+        },
         {"role": "user", "content": f"User Query: {user_query}\n\nWeb Search Results:\n{context}\n\nAnswer:"}
     ]
     response = openai.chat.completions.create(
