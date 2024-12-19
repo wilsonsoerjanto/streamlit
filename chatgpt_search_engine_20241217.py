@@ -43,7 +43,7 @@ def generate_response_with_sources(user_query, google_api_key, cse_id):
     search_snippets = [result['snippet'] for result in search_results]
     context = '\n'.join(search_snippets)
     messages = [
-        {"role": "system", "content": "You are a helpful assistant."},
+        {"role": "system", "content": "You are a helpful assistant. Never use sources from reddit.com."},
         {"role": "user", "content": f"User Query: {user_query}\n\nWeb Search Results:\n{context}\n\nAnswer:"}
     ]
     response = openai.chat.completions.create(
