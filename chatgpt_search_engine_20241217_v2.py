@@ -35,14 +35,19 @@ def web_search(query, google_api_key, cse_id, excluded_domains=None):
     response.raise_for_status()
     search_results = response.json()
 
-    # Filter out results from excluded domains
-    if excluded_domains:
-        search_results = [
-            result for result in search_results
-            if not any(domain in result['link'] for domain in excluded_domains)
-        ]
+    # Ensure 'items' exists in the response
+    if 'items' not in search_results:
+        return []  # Return an empty list if no results found
     
-    return search_results.get('items', [])
+    # Extract and filter results
+    filtered_results = []
+    for result in search_results['items']:
+        if 'link' in result:
+            if excluded_domains and any(domain in result['link'] for domain in excluded_domains):
+                continue
+            filtered_results.append(result)
+    
+    return filtered_results
 
 # Function to generate response using OpenAI API
 def generate_response_with_sources(messages, google_api_key, cse_id):
