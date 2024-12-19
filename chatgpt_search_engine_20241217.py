@@ -64,7 +64,8 @@ def generate_response_with_sources(user_query, google_api_key, cse_id):
         model='gpt-4o-mini',  # Update to 'gpt-3.5-turbo' or another model you're using
         messages=messages,
         max_tokens=2000,
-        temperature=0.5
+        temperature=0.2,
+        top_p=0.1
     )
     answer = response.choices[0].message.content
     return answer, sources
