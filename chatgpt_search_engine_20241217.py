@@ -42,14 +42,17 @@ def generate_response_with_sources(user_query, google_api_key, cse_id):
     sources = [result['link'] for result in search_results]
     search_snippets = [result['snippet'] for result in search_results]
     context = '\n'.join(search_snippets)
-    prompt = f"User Query: {user_query}\n\nWeb Search Results:\n{context}\n\nAnswer:"
+    messages = [
+        {"role": "system", "content": "You are a helpful assistant."},
+        {"role": "user", "content": f"User Query: {user_query}\n\nWeb Search Results:\n{context}\n\nAnswer:"}
+    ]
     response = openai.chat.completions.create(
-        model='text-davinci-003',
-        prompt=prompt,
+        model='gpt-4o-mini',  # Update to 'gpt-3.5-turbo' or another model you're using
+        messages=messages,
         max_tokens=2000,
         temperature=0.5
     )
-    answer = response.choices[0].text.strip()
+    answer = response.choices[0].message.content
     return answer, sources
 
 # Streamlit UI
