@@ -63,7 +63,7 @@ def generate_response_with_sources(user_query, google_api_key, cse_id):
     response = openai.chat.completions.create(
         model='gpt-4o-mini',  # Update to 'gpt-3.5-turbo' or another model you're using
         messages=messages,
-        max_tokens=2000,
+        max_tokens=4000,
         temperature=0.2
     )
     answer = response.choices[0].message.content
