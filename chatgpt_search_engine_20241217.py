@@ -24,7 +24,7 @@ def validate_google_api_key(api_key, cse_id):
     return response.status_code == 200
 
 # Function to perform web search using Google Custom Search API
-def web_search(query, google_api_key, cse_id):
+def web_search(query, google_api_key, cse_id, excluded_domains=None):
     search_url = 'https://www.googleapis.com/customsearch/v1'
     params = {
         'q': query,
@@ -34,16 +34,25 @@ def web_search(query, google_api_key, cse_id):
     response = requests.get(search_url, params=params)
     response.raise_for_status()
     search_results = response.json()
+
+    # Filter out results from excluded domains
+    if excluded_domains:
+        search_results = [
+            result for result in search_results
+            if not any(domain in result['link'] for domain in excluded_domains)
+        ]
+    
     return search_results.get('items', [])
 
 # Function to generate response using OpenAI API
 def generate_response_with_sources(user_query, google_api_key, cse_id):
+    excluded_domains = ["www.reddit.com"]
     search_results = web_search(user_query, google_api_key, cse_id)
     sources = [result['link'] for result in search_results]
     search_snippets = [result['snippet'] for result in search_results]
     context = '\n'.join(search_snippets)
     messages = [
-        {"role": "system", "content": "You are a helpful assistant. Never use sources from reddit.com."},
+        {"role": "system", "content": "You are a helpful assistant. Do not refer to sources from undesired domains"},
         {"role": "user", "content": f"User Query: {user_query}\n\nWeb Search Results:\n{context}\n\nAnswer:"}
     ]
     response = openai.chat.completions.create(
