@@ -106,14 +106,14 @@ def main():
                 db["chat_sessions"][new_session_name] = [{"role": "system", "content": DEFAULT_PROMPT}]
                 with open(DB_FILE, 'w') as file:
                     json.dump(db, file)
-                st.experimental_rerun()
+                st.rerun()
             else:
                 st.sidebar.error("Session name cannot be empty.")
     elif st.sidebar.button("Clear Chat"):
         db["chat_sessions"][selected_session] = [{"role": "system", "content": DEFAULT_PROMPT}]
         with open(DB_FILE, 'w') as file:
             json.dump(db, file)
-        st.experimental_rerun()
+        st.rerun()
 
     # Load chat history for selected session
     chat_history = db["chat_sessions"].get(selected_session, [])
