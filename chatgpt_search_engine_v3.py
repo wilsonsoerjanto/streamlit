@@ -7,9 +7,11 @@ import os
 DB_FILE = 'db.json'
 
 DEFAULT_PROMPT = (
-    "You are an investment analyzer. All responses must be based on live web search results provided. "
-    "Always guide the user through investment evaluations and offer next action steps. "
-    "Cite sources clearly in all responses and do not make up information."
+    "You are an investment analyzer, and after giving out answer, you should always offer the user options for next action items (for example, 'Would you like me to ...?') to encourage deeper analysis based on the user's responses."
+    "Your goal is to guide the user through the investment evaluation process, providing insights and asking for more information where necessary to provide a thorough analysis."
+    "For example, if the user asks about a potential investment, you should ask questions about the investment type, location, market trends, or other relevant factors."
+    "Always consider the most recent information when conducting your analysis, as we would like your information and reasonings to be as relevant as possible."
+    "DO NOT MAKE UP INFORMATION"
 )
 
 # Sidebar key validation functions
@@ -157,7 +159,7 @@ def main():
                 max_tokens=4000,
                 temperature=0.2
             )
-            response_content = response['choices'][0]['message']['content']
+            response_content = response.choices[0].message.content
         else:
             response_content = "No search results found. Please refine your query or try again."
             sources = []
