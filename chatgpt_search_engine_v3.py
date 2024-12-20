@@ -146,7 +146,7 @@ def main():
             
             # Prepare context for OpenAI response
             search_context = "\n".join(snippets)
-            messages = [
+            messages = chat_history + [
                 {"role": "system", "content": DEFAULT_PROMPT},
                 {"role": "user", "content": user_input},
                 {"role": "assistant", "content": f"Based on the following search results:\n{search_context}"}
@@ -167,10 +167,18 @@ def main():
         # Display assistant response
         with st.chat_message("assistant"):
             st.markdown(response_content)
+            
             if sources:
-                st.markdown("\n\n**Sources:**")
-                for source in sources:
-                    st.markdown(f"- [{source}]({source})")
+                if "show_sources" not in st.session_state:
+                    st.session_state.show_sources = False
+
+                if st.button("Show Sources"):
+                    st.session_state.show_sources = not st.session_state.show_sources
+
+                if st.session_state.show_sources:
+                    st.markdown("\n\n**Sources:**")
+                    for source in sources:
+                        st.markdown(f"- [{source}]({source})")
 
         chat_history.append({"role": "assistant", "content": response_content})
         db["chat_sessions"][selected_session] = chat_history
