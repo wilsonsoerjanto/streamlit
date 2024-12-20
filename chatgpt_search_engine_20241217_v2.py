@@ -151,7 +151,7 @@ def main():
             response_content = ""
             with st.chat_message("assistant"):
                 for chunk in response_stream:
-                    chunk_content = chunk.choices[0].delta.get("content", "")
+                    chunk_content = getattr(chunk.choices[0].delta, "content", "")
                     response_content += chunk_content
                     st.write(chunk_content)
 
