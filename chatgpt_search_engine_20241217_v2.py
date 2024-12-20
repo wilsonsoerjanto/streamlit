@@ -143,19 +143,17 @@ def main():
             response_content = "\n\n".join(snippets) if snippets else "No results found."
         else:
             # Generate OpenAI response
-            response_stream = openai.chat.completions.create(
-                model=selected_model,
-                messages=chat_history,
-                stream=True
-            )
             response_content = ""
             with st.chat_message("assistant"):
-                for chunk in response_stream:
-                    chunk_content = getattr(chunk.choices[0].delta, "content", "")
-                    response_content += chunk_content
-                    st.write(chunk_content)
+                response_stream = openai.chat.completions.create(
+                    model=selected_model,
+                    messages=chat_history,
+                    stream=True
+                )
+                response_content = st.write_stream(response_stream)
+            chat_history.append({"role": "assistant", "content": response_content})
 
-        chat_history.append({"role": "assistant", "content": response_content})
+        # Store updated chat history in db.json
         db["chat_sessions"][selected_session] = chat_history
         with open(DB_FILE, 'w') as file:
             json.dump(db, file)
