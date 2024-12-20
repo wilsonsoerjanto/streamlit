@@ -167,20 +167,24 @@ def main():
         # Display assistant response
         with st.chat_message("assistant"):
             st.markdown(response_content)
-            
-            if sources:
-                if "show_sources" not in st.session_state:
-                    st.session_state.show_sources = False
 
-                if st.button("Show Sources"):
-                    st.session_state.show_sources = not st.session_state.show_sources
+        # Show sources button and toggle display
+        if "show_sources" not in st.session_state:
+            st.session_state.show_sources = False
 
-                if st.session_state.show_sources:
-                    st.markdown("\n\n**Sources:**")
-                    for source in sources:
-                        st.markdown(f"- [{source}]({source})")
+        if st.button("Show Sources"):
+            st.session_state.show_sources = not st.session_state.show_sources
 
+        if st.session_state.show_sources:
+            st.markdown("\n\n**Sources:**")
+            for source in sources:
+                st.markdown(f"- [{source}]({source})")
+
+        # Store sources and assistant message in chat history
         chat_history.append({"role": "assistant", "content": response_content})
+        if st.session_state.show_sources:
+            chat_history.append({"role": "assistant", "content": f"Sources:\n" + "\n".join(sources)})
+        
         db["chat_sessions"][selected_session] = chat_history
         with open(DB_FILE, 'w') as file:
             json.dump(db, file)
