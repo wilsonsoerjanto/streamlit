@@ -17,9 +17,9 @@ DEFAULT_PROMPT = (
 def validate_openai_api_key(api_key):
     try:
         openai.api_key = api_key
-        openai.Model.list()  # Simple call to validate the key
+        openai.models.list()  # Simple call to validate the key
         return True
-    except openai.error.AuthenticationError:
+    except openai.AuthenticationError:
         return False
 
 def validate_google_api_key(api_key, cse_id):
@@ -140,7 +140,7 @@ def main():
             response_content = "\n\n".join(snippets) if snippets else "No results found."
         else:
             # Generate OpenAI response
-            response_stream = openai.ChatCompletion.create(
+            response_stream = openai.chat.completions.create(
                 model=selected_model,
                 messages=chat_history,
                 stream=True
