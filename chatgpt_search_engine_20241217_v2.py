@@ -107,4 +107,55 @@ def main():
                 json.dump(db, file)
             st.experimental_rerun()
     elif st.sidebar.button("Clear Chat"):
-        db["chat_sessions"][selected_sessi
+        db["chat_sessions"][selected_session] = [{"role": "system", "content": DEFAULT_PROMPT}]
+        with open(DB_FILE, 'w') as file:
+            json.dump(db, file)
+        st.experimental_rerun()
+
+    # Load chat history for selected session
+    chat_history = db["chat_sessions"].get(selected_session, [])
+
+    # Display chat messages
+    for message in chat_history:
+        if message["role"] != "system":
+            with st.chat_message(message["role"]):
+                st.markdown(message["content"])
+
+    # Accept user input
+    user_input = st.chat_input("Type your message:")
+    if user_input:
+        with st.chat_message("user"):
+            st.markdown(user_input)
+        chat_history.append({"role": "user", "content": user_input})
+        
+        # Check for "search" keyword
+        if "search" in user_input.lower():
+            search_results = live_web_search(
+                user_input,
+                st.session_state.google_api_key,
+                st.session_state.google_cse_id,
+                excluded_domains=["reddit.com"]
+            )
+            snippets = [result["snippet"] for result in search_results]
+            response_content = "\n\n".join(snippets) if snippets else "No results found."
+        else:
+            # Generate OpenAI response
+            response_stream = openai.ChatCompletion.create(
+                model=selected_model,
+                messages=chat_history,
+                stream=True
+            )
+            response_content = ""
+            with st.chat_message("assistant"):
+                for chunk in response_stream:
+                    chunk_content = chunk.choices[0].delta.get("content", "")
+                    response_content += chunk_content
+                    st.write(chunk_content)
+
+        chat_history.append({"role": "assistant", "content": response_content})
+        db["chat_sessions"][selected_session] = chat_history
+        with open(DB_FILE, 'w') as file:
+            json.dump(db, file)
+
+if __name__ == "__main__":
+    main()
