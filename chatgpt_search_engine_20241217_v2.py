@@ -87,7 +87,7 @@ def main():
     openai.api_key = st.session_state.openai_api_key
 
     # Sidebar: Model Selection
-    models = ["gpt-4-turbo", "gpt-4", "gpt-3.5-turbo"]
+    models = ["gpt-4o-mini", "gpt-4o", "gpt-3.5-turbo"]
     selected_model = st.sidebar.selectbox("Select OpenAI Model", models)
 
     # Multi-session management
