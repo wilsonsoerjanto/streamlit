@@ -97,15 +97,18 @@ def main():
     selected_session = st.sidebar.selectbox(
         "Select Chat Session",
         session_names + ["New Chat"],
-        index=0 if session_names else -1
+        index=len(session_names) if session_names else 0
     )
     if selected_session == "New Chat":
         new_session_name = st.sidebar.text_input("Enter a name for the new session")
         if st.sidebar.button("Create Session"):
-            db["chat_sessions"][new_session_name] = [{"role": "system", "content": DEFAULT_PROMPT}]
-            with open(DB_FILE, 'w') as file:
-                json.dump(db, file)
-            st.experimental_rerun()
+            if new_session_name:
+                db["chat_sessions"][new_session_name] = [{"role": "system", "content": DEFAULT_PROMPT}]
+                with open(DB_FILE, 'w') as file:
+                    json.dump(db, file)
+                st.experimental_rerun()
+            else:
+                st.sidebar.error("Session name cannot be empty.")
     elif st.sidebar.button("Clear Chat"):
         db["chat_sessions"][selected_session] = [{"role": "system", "content": DEFAULT_PROMPT}]
         with open(DB_FILE, 'w') as file:
